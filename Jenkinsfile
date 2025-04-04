@@ -7,7 +7,8 @@ pipeline {
         APP_SERVICE_NAME = 'webapijenkins-04082003'
         GIT_REPO_URL = 'https://github.com/aditya-blanko/Terraform-Jenkins.git'
         GIT_BRANCH = 'main'
-        TERRAFORM_VERSION = '1.7.5'  // Specify the Terraform version you want to use
+        TERRAFORM_VERSION = '1.7.5'
+        DEPLOYMENT_TIMEOUT = '1800'
     }
 
     stages {
@@ -20,11 +21,11 @@ pipeline {
         stage('Install Terraform') {
             steps {
                 bat '''
-                    
+                    echo Installing Terraform...
                     powershell -Command "Invoke-WebRequest -Uri 'https://releases.hashicorp.com/terraform/%TERRAFORM_VERSION%/terraform_%TERRAFORM_VERSION%_windows_amd64.zip' -OutFile 'terraform.zip'"
                     powershell -Command "Expand-Archive -Path 'terraform.zip' -DestinationPath 'C:\\terraform' -Force"
                     setx PATH "%PATH%;C:\\terraform" /M
-                    
+                    echo Terraform installation completed
                 '''
             }
         }
@@ -45,6 +46,7 @@ pipeline {
                 dir('terraform') {
                     bat '''
                         C:\\terraform\\terraform.exe init
+                        C:\\terraform\\terraform.exe workspace new dev || C:\\terraform\\terraform.exe workspace select dev
                     '''
                 }
             }
@@ -76,7 +78,14 @@ pipeline {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat '''
-                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\webapi.zip" --type zip
+                        az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "dotnet Webapi.dll"
+                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ASPNETCORE_ENVIRONMENT=Production
+                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings WEBSITE_RUN_FROM_PACKAGE=1
+                        
+                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\webapi.zip" --type zip --timeout %DEPLOYMENT_TIMEOUT%
+                        az webapp restart --name %APP_SERVICE_NAME% --resource-group %RESOURCE_GROUP%
+                        
+                        
                     '''
                 }
             }
@@ -90,6 +99,8 @@ pipeline {
                 Deployment Successful!
                 Your application is available at:
                 https://%APP_SERVICE_NAME%.azurewebsites.net
+                Swagger UI is available at:
+                https://%APP_SERVICE_NAME%.azurewebsites.net/swagger
                 =========================================
             '''
         }
