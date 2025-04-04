@@ -5,22 +5,35 @@ pipeline {
         AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
         RESOURCE_GROUP = 'rg-jenkins'
         APP_SERVICE_NAME = 'webapijenkinssinghal22025'
-        GIT_REPO_URL = 'https://github.com/aditya-blanko/Terraform-Jenkins.git'  // Replace with your actual repo URL
-        GIT_BRANCH = 'main'  // Replace with your branch name
+        GIT_REPO_URL = 'https://github.com/aditya-blanko/Terraform-Jenkins.git'
+        GIT_BRANCH = 'main'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // Checkout the code from your Git repository
                 git branch: GIT_BRANCH, url: GIT_REPO_URL
+            }
+        }
+
+        stage('Azure Login') {
+            steps {
+                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                    bat '''
+                        az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
+                        az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
+                    '''
+                }
             }
         }
 
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
-                    bat 'terraform init'
+                    bat '''
+                        terraform init
+                        terraform workspace new dev || terraform workspace select dev
+                    '''
                 }
             }
         }
@@ -28,8 +41,10 @@ pipeline {
         stage('Terraform Plan & Apply') {
             steps {
                 dir('terraform') {
-                    bat 'terraform plan'
-                    bat 'terraform apply -auto-approve'
+                    bat '''
+                        terraform plan
+                        terraform apply -auto-approve
+                    '''
                 }
             }
         }
@@ -49,8 +64,6 @@ pipeline {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat '''
-                        az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
-                        az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
                         az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\webapi.zip" --type zip
                     '''
                 }
