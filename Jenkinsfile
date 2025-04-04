@@ -78,6 +78,7 @@ pipeline {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                     bat '''
+                         az webapp cors add --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --allowed-origins "*"
                         az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "dotnet Webapi.dll"
                         az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ASPNETCORE_ENVIRONMENT=Production
                         az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings WEBSITE_RUN_FROM_PACKAGE=1
