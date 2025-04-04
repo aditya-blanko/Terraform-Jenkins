@@ -74,29 +74,43 @@ pipeline {
             }
         }
 
-        stage('Deploy to Azure App Service') {
-            steps {
-                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                     bat 'az webapp cors add --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --allowed-origins "*"'
-                    
-                    // Set startup file
-                    bat 'az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "dotnet Webapi.dll"'
-                    
-                    // Set environment
-                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ASPNETCORE_ENVIRONMENT=Production'
-                    
-                    // Enable package deployment
-                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings WEBSITE_RUN_FROM_PACKAGE=1'
-                    
-                    // Deploy the application
-                    bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\webapi.zip" --type zip --timeout %DEPLOYMENT_TIMEOUT%'
-                    
-                    // Restart the app service
-                    bat 'az webapp restart --name %APP_SERVICE_NAME% --resource-group %RESOURCE_GROUP%'
-                
-                }
-            }
+       stage('Deploy to Azure App Service') {
+    steps {
+        withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+            // Configure CORS
+            bat 'az webapp cors add --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --allowed-origins "*"'
+            
+            // Set startup file and runtime
+            bat 'az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "dotnet Webapi.dll" --linux-fx-version "DOTNETCORE|8.0"'
+            
+            // Set environment and startup settings
+            bat '''
+                az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ^
+                ASPNETCORE_ENVIRONMENT=Production ^
+                WEBSITE_RUN_FROM_PACKAGE=1 ^
+                WEBSITE_NODE_DEFAULT_VERSION=~18 ^
+                SCM_DO_BUILD_DURING_DEPLOYMENT=true ^
+                ENABLE_ORYX_BUILD=true ^
+                DOTNET_VERSION=8.0 ^
+                WEBSITE_HTTPLOGGING_RETENTION_DAYS=7 ^
+                WEBSITE_ENABLE_APP_SERVICE_STORAGE=true
+            '''
+            
+            // Create deployment package with startup command
+            bat '''
+                mkdir deploy
+                copy Webapi\\out\\* deploy\\
+                echo dotnet Webapi.dll > deploy\\startup.txt
+                powershell Compress-Archive -Path "deploy\\*" -DestinationPath "deploy.zip" -Force
+            '''
+            
+            // Deploy the application
+            bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path deploy.zip --type zip --timeout 300'
+            
+            
         }
+    }
+}
     }
 
     post {
