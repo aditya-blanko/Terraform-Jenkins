@@ -7,12 +7,25 @@ pipeline {
         APP_SERVICE_NAME = 'webapijenkinssinghal22025'
         GIT_REPO_URL = 'https://github.com/aditya-blanko/Terraform-Jenkins.git'
         GIT_BRANCH = 'main'
+        TERRAFORM_VERSION = '1.7.5'  // Specify the Terraform version you want to use
     }
 
     stages {
         stage('Checkout Code') {
             steps {
                 git branch: GIT_BRANCH, url: GIT_REPO_URL
+            }
+        }
+
+        stage('Install Terraform') {
+            steps {
+                bat '''
+                    
+                    powershell -Command "Invoke-WebRequest -Uri 'https://releases.hashicorp.com/terraform/%TERRAFORM_VERSION%/terraform_%TERRAFORM_VERSION%_windows_amd64.zip' -OutFile 'terraform.zip'"
+                    powershell -Command "Expand-Archive -Path 'terraform.zip' -DestinationPath 'C:\\terraform' -Force"
+                    setx PATH "%PATH%;C:\\terraform" /M
+                    
+                '''
             }
         }
 
@@ -31,8 +44,7 @@ pipeline {
             steps {
                 dir('terraform') {
                     bat '''
-                        terraform init
-                        terraform workspace new dev || terraform workspace select dev
+                        C:\\terraform\\terraform.exe init
                     '''
                 }
             }
@@ -42,8 +54,8 @@ pipeline {
             steps {
                 dir('terraform') {
                     bat '''
-                        terraform plan
-                        terraform apply -auto-approve
+                        C:\\terraform\\terraform.exe plan
+                        C:\\terraform\\terraform.exe apply -auto-approve
                     '''
                 }
             }
