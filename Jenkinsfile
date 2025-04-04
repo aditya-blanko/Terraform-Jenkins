@@ -77,17 +77,23 @@ pipeline {
         stage('Deploy to Azure App Service') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    bat '''
-                         az webapp cors add --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --allowed-origins "*"
-                        az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "dotnet Webapi.dll"
-                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ASPNETCORE_ENVIRONMENT=Production
-                        az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings WEBSITE_RUN_FROM_PACKAGE=1
-                        
-                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\webapi.zip" --type zip --timeout %DEPLOYMENT_TIMEOUT%
-                        az webapp restart --name %APP_SERVICE_NAME% --resource-group %RESOURCE_GROUP%
-                        
-                        
-                    '''
+                     bat 'az webapp cors add --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --allowed-origins "*"'
+                    
+                    // Set startup file
+                    bat 'az webapp config set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --startup-file "dotnet Webapi.dll"'
+                    
+                    // Set environment
+                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings ASPNETCORE_ENVIRONMENT=Production'
+                    
+                    // Enable package deployment
+                    bat 'az webapp config appsettings set --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --settings WEBSITE_RUN_FROM_PACKAGE=1'
+                    
+                    // Deploy the application
+                    bat 'az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\webapi.zip" --type zip --timeout %DEPLOYMENT_TIMEOUT%'
+                    
+                    // Restart the app service
+                    bat 'az webapp restart --name %APP_SERVICE_NAME% --resource-group %RESOURCE_GROUP%'
+                
                 }
             }
         }
