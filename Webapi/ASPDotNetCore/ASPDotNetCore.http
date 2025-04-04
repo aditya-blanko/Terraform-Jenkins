@@ -1,0 +1,6 @@
+@ASPDotNetCore_HostAddress = http://localhost:5049
+
+GET {{ASPDotNetCore_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
