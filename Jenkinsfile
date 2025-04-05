@@ -7,7 +7,7 @@
             APP_SERVICE_NAME = 'webapijenkins-04000425'
         }
 
-        
+        stages {
 
             stage('Terraform Init') {
                 steps {
