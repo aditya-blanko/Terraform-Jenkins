@@ -1,12 +1,9 @@
 pipeline {
     agent any
-
     environment {
         AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
         RESOURCE_GROUP = 'rg-0401425'
         APP_SERVICE_NAME = 'webapijenkins-04000425'
-        
-        
     }
 
     stages {
@@ -50,26 +47,5 @@ pipeline {
             }
         }
 
-    }
-
-    post {
-        success {
-            echo '''
-                =========================================
-                Deployment Successful!
-                Your application is available at:
-                https://%APP_SERVICE_NAME%.azurewebsites.net
-                =========================================
-            '''
-        }
-        failure {
-            echo '''
-                =========================================
-                Deployment Failed!
-                Please check the logs for details.
-                =========================================
-            '''
-        }
-        
     }
 }
