@@ -13,12 +13,11 @@ pipeline {
     stages {
         stage('Setup Terraform') {
             steps {
-                    bat '''
-                            powershell -Command "& {Invoke-WebRequest -Uri 'https://releases.hashicorp.com/terraform/%TERRAFORM_VERSION%/terraform_%TERRAFORM_VERSION%_windows_amd64.zip' -OutFile '%TERRAFORM_DIR%\\terraform.zip'}"
-                            powershell -Command "& {Expand-Archive -Path '%TERRAFORM_DIR%\\terraform.zip' -DestinationPath '%TERRAFORM_DIR%' -Force}"
-                            del "%TERRAFORM_DIR%\\terraform.zip"
-                    '''
-                }
+                bat '''
+                    powershell -Command "& {Invoke-WebRequest -Uri 'https://releases.hashicorp.com/terraform/%TERRAFORM_VERSION%/terraform_%TERRAFORM_VERSION%_windows_amd64.zip' -OutFile '%TERRAFORM_DIR%\\terraform.zip'}"
+                    powershell -Command "& {Expand-Archive -Path '%TERRAFORM_DIR%\\terraform.zip' -DestinationPath '%TERRAFORM_DIR%' -Force}"
+                    del "%TERRAFORM_DIR%\\terraform.zip"
+                '''
             }
         }
 
@@ -57,7 +56,7 @@ pipeline {
                 }
             }
         }
-    
+    }
 
     post {
         success {
@@ -66,6 +65,5 @@ pipeline {
         failure {
             echo 'Deployment Failed!'
         }
-    
     }
-} 
+}
