@@ -38,10 +38,11 @@
             stage('Publish .NET 8 Web API') {
                 steps {
                     dir('Webapi') {
-                        bat '''
-                            dotnet publish -c Release -o out
-                            powershell Compress-Archive -Path "out\\*" -DestinationPath "Webapi.zip" -Force
-                        '''
+                        bat 'dotnet restore'
+                        bat 'dotnet build --configuration Release'
+                        bat 'dotnet publish -c Release -o out'
+                        bat 'powershell Compress-Archive -Path "out\\*" -DestinationPath "Webapi.zip" -Force'
+                    
                     }
                 }
             }
