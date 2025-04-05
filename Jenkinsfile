@@ -41,7 +41,7 @@ pipeline {
 
         stage('Publish .NET 8 Web API') {
             steps {
-                dir('webapi') {
+                dir('Webapi') {
                     bat 'dotnet publish -c Release -o out'
                     bat 'powershell Compress-Archive -Path out\\* -DestinationPath webapi.zip -Force'
                 }
