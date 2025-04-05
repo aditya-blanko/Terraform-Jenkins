@@ -7,18 +7,7 @@
             APP_SERVICE_NAME = 'webapijenkins-04000425'
         }
 
-        stages {
-            stage('Azure Login') {
-                steps {
-                    withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                        bat '''
-                            set PATH=%AZURE_CLI_PATH%;%PATH%
-                            az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
-                            az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
-                        '''
-                    }
-                }
-            }
+        
 
             stage('Terraform Init') {
                 steps {
