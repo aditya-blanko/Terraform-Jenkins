@@ -19,8 +19,7 @@
                                         powershell -Command "& {Invoke-WebRequest -Uri 'https://releases.hashicorp.com/terraform/%TERRAFORM_VERSION%/terraform_%TERRAFORM_VERSION%_windows_amd64.zip' -OutFile '%TERRAFORM_DIR%\\terraform.zip'}"
                                         echo Extracting Terraform...
                                         powershell -Command "& {Expand-Archive -Path '%TERRAFORM_DIR%\\terraform.zip' -DestinationPath '%TERRAFORM_DIR%' -Force}"
-                                        echo Cleaning up...
-                                        del "%TERRAFORM_DIR%\\terraform.zip"
+                  
                                         echo Terraform setup complete.
                                     '''
                                 }
@@ -29,7 +28,7 @@
                             stage('Terraform Init') {
                                 steps {
                                     dir('terraform') {
-                                        bat 'terraform init'
+                                        bat '"%TERRAFORM_PATH%" terraform init'
                                     }
                                 }
                             }
@@ -37,8 +36,8 @@
                             stage('Terraform Plan & Apply') {
                                 steps {
                                     dir('terraform') {
-                                        bat 'terraform plan -out=tfplan'
-                                        bat 'terraform apply -auto-approve tfplan'
+                                        bat '"%TERRAFORM_PATH%" terraform plan -out=tfplan'
+                                        bat '"%TERRAFORM_PATH%" terraform apply -auto-approve tfplan'
                                     }
                                 }
                             }
