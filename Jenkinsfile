@@ -5,14 +5,32 @@
             AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
             RESOURCE_GROUP = 'rg-0401425'
             APP_SERVICE_NAME = 'webapijenkins-04000425'
+            AZURE_CLI_PATH = env.AZPATH
+            SYSTEM_PATH = env.CMDPATH
+            TERRAFORM_PATH = env.PATH
         }
 
         stages {
+            
+            stage('Azure Login') {
+                steps {
+                    withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
+                        bat '''
+                            set PATH=%AZURE_CLI_PATH%;%SYSTEM_PATH%;%TERRAFORM_PATH%;%PATH%
+                            az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
+                            az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
+                        '''
+                    }
+                }
+            }
 
             stage('Terraform Init') {
                 steps {
                     dir('terraform') {
-                        bat 'terraform init'
+                        bat '''
+                            set PATH=%AZURE_CLI_PATH%;%SYSTEM_PATH%;%TERRAFORM_PATH%;%PATH%
+                            terraform init
+                        '''
                     }
                 }
             }
@@ -21,6 +39,7 @@
                 steps {
                     dir('terraform') {
                         bat '''
+                            set PATH=%AZURE_CLI_PATH%;%SYSTEM_PATH%;%TERRAFORM_PATH%;%PATH%
                             terraform plan
                             terraform apply -auto-approve
                         '''
@@ -43,6 +62,7 @@
                 steps {
                     withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
                         bat '''
+                            set PATH=%AZURE_CLI_PATH%;%SYSTEM_PATH%;%TERRAFORM_PATH%;%PATH%
                             az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
                             az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
                             az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path %WORKSPACE%\\Webapi\\Webapi.zip --type zip
