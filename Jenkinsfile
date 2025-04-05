@@ -1,5 +1,6 @@
 pipeline {
     agent any
+
     environment {
         AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
         RESOURCE_GROUP = 'rg-0401425'
@@ -7,7 +8,6 @@ pipeline {
     }
 
     stages {
-
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
@@ -37,15 +37,26 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy to Azure App Service') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
-                    sh "az account set --subscription $AZURE_SUBSCRIPTION_ID"
-                    sh "az webapp deploy --resource-group rg-0401425 --name webapijenkins-04000425 --src-path $WORKSPACE\\Webapi\\Webapi.zip --type zip"
+                    bat '''
+                        az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
+                        az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
+                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path %WORKSPACE%\\Webapi\\Webapi.zip --type zip
+                    '''
                 }
             }
-        }
-
+        }
     }
-}
+
+    post {
+        success {
+            echo 'Deployment Successful!'
+        }
+        failure {
+            echo 'Deployment Failed!'
+        }
+    }
+} 
