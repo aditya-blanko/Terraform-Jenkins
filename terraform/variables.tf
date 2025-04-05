@@ -1,7 +1,7 @@
 variable "resource_group_name" {
   description = "The name of the Azure Resource Group where resources will be deployed"
   type        = string
-  default     = "rg-04082003"
+  default     = "rg-0401425"
 }
 
 variable "location" {
@@ -19,6 +19,6 @@ variable "app_service_plan_name" {
 variable "app_service_name" {
   description = "The name of the Azure App Service"
   type        = string
-  default     = "webapijenkins-04082003"   //  Global Unique name for Azure App Service
+  default     = "webapijenkins-04000425"   //  Global Unique name for Azure App Service
 }
 
