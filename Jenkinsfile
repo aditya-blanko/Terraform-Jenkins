@@ -5,13 +5,30 @@
             AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
             RESOURCE_GROUP = 'rg-0401425'
             APP_SERVICE_NAME = 'webapijenkins-04000425'
-            AZURE_CLI_PATH = env.AZPATH
-            SYSTEM_PATH = env.CMDPATH
-            TERRAFORM_PATH = env.PATH
+            AZURE_CLI_PATH = "${env.AZPATH}"
+            SYSTEM_PATH = "${env.CMDPATH}"
+            TERRAFORM_PATH = "${env.PATH}"
         }
 
         stages {
-            
+            stage('Check Environment') {
+                steps {
+                    bat '''
+                        echo Setting up environment paths...
+                        set PATH=%AZURE_CLI_PATH%;%SYSTEM_PATH%;%TERRAFORM_PATH%;%PATH%
+                        
+                        echo Checking Azure CLI...
+                        where az
+                        echo.
+                        echo Checking Terraform...
+                        where terraform
+                        echo.
+                        echo Current PATH:
+                        echo %PATH%
+                    '''
+                }
+            }
+
             stage('Azure Login') {
                 steps {
                     withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
