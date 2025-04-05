@@ -5,13 +5,14 @@ pipeline {
         AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
         RESOURCE_GROUP = 'rg-0401425'
         APP_SERVICE_NAME = 'webapijenkins-04000425'
+        TERRAFORM_PATH = 'C:\\Users\\window 10\\Downloads\\terraform_1.11.3_windows_386'
     }
 
     stages {
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
-                    bat 'terraform init'
+                    bat '%TERRAFORM_PATH%\\terraform init'
                 }
             }
         }
@@ -20,8 +21,8 @@ pipeline {
             steps {
                 dir('terraform') {
                     bat '''
-                        terraform plan
-                        terraform apply -auto-approve
+                       %TERRAFORM_PATH%\\ terraform plan
+                       %TERRAFORM_PATH%\\ terraform apply -auto-approve
                     '''
                 }
             }
