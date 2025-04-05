@@ -5,47 +5,16 @@ pipeline {
         AZURE_CREDENTIALS_ID = 'azure-service-principal-01'
         RESOURCE_GROUP = 'rg-0401425'
         APP_SERVICE_NAME = 'webapijenkins-04000425'
-        GIT_REPO_URL = 'https://github.com/aditya-blanko/Terraform-Jenkins.git'
-        GIT_BRANCH = 'main'
-        TERRAFORM_VERSION = '1.7.5'  // Specify the Terraform version you want to use
+        
+        
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: GIT_BRANCH, url: GIT_REPO_URL
-            }
-        }
-
-        stage('Install Terraform') {
-            steps {
-                bat '''
-                    
-                    powershell -Command "Invoke-WebRequest -Uri 'https://releases.hashicorp.com/terraform/%TERRAFORM_VERSION%/terraform_%TERRAFORM_VERSION%_windows_amd64.zip' -OutFile 'terraform.zip'"
-                    powershell -Command "Expand-Archive -Path 'terraform.zip' -DestinationPath 'C:\\terraform' -Force"
-                    setx PATH "%PATH%;C:\\terraform" /M
-                    
-                '''
-            }
-        }
-
-        stage('Azure Login') {
-            steps {
-                withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    bat '''
-                        az login --service-principal -u "%AZURE_CLIENT_ID%" -p "%AZURE_CLIENT_SECRET%" --tenant "%AZURE_TENANT_ID%"
-                        az account set --subscription "%AZURE_SUBSCRIPTION_ID%"
-                    '''
-                }
-            }
-        }
 
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
-                    bat '''
-                        C:\\terraform\\terraform.exe init
-                    '''
+                    bat 'terraform init'
                 }
             }
         }
@@ -54,8 +23,8 @@ pipeline {
             steps {
                 dir('terraform') {
                     bat '''
-                        C:\\terraform\\terraform.exe plan
-                        C:\\terraform\\terraform.exe apply -auto-approve
+                        terraform plan
+                        terraform apply -auto-approve
                     '''
                 }
             }
@@ -71,16 +40,16 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy to Azure App Service') {
             steps {
                 withCredentials([azureServicePrincipal(credentialsId: AZURE_CREDENTIALS_ID)]) {
-                    bat '''
-                        az webapp deploy --resource-group %RESOURCE_GROUP% --name %APP_SERVICE_NAME% --src-path "%WORKSPACE%\\Webapi\\Webapi.zip" --type zip
-                    '''
+                    sh "az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID"
+                    sh "az account set --subscription $AZURE_SUBSCRIPTION_ID"
+                    sh "az webapp deploy --resource-group rg-0401425 --name webapijenkins-04000425 --src-path $WORKSPACE\\Webapi\\Webapi.zip --type zip"
                 }
             }
-        }
+        }
+
     }
 
     post {
