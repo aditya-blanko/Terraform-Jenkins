@@ -29,7 +29,7 @@
                             stage('Terraform Init') {
                                 steps {
                                     dir('terraform') {
-                                        bat '"%TERRAFORM_PATH%" init'
+                                        bat 'terraform init'
                                     }
                                 }
                             }
@@ -37,8 +37,8 @@
                             stage('Terraform Plan & Apply') {
                                 steps {
                                     dir('terraform') {
-                                        bat '"%TERRAFORM_PATH%" plan -out=tfplan'
-                                        bat '"%TERRAFORM_PATH%" apply -auto-approve tfplan'
+                                        bat 'terraform plan -out=tfplan'
+                                        bat 'terraform apply -auto-approve tfplan'
                                     }
                                 }
                             }
